@@ -266,17 +266,19 @@ function main() {
             gl.uniform1f(u_timeLoc, 0.1 * this.speed * now);
         }
     };
+    // var modelViewMatrix, projectionMatrix;
+    // var modelViewMatrixLoc, projectionMatrixLoc;
 
     // --- camera object to wrap camera parameters and methods    
     let camera = {
         viewMatrix: function () {
-
+            
             // get slider values
-            let rotx = Number(document.getElementById("rotXSlider").value);
-            let roty = Number(document.getElementById("rotYSlider").value);
+            let rotx = Number(document.getElementById("rotXSlider").value); // theta
+            let roty = Number(document.getElementById("rotYSlider").value); // phi
             let rotup = Number(document.getElementById("rotZSlider").value);
-            let dist = Number(document.getElementById("distSlider").value);
-
+            let dist = Number(document.getElementById("distSlider").value); // radius
+            
             // *** TODO_A3 *** Task 1a ***
             // Implement the view-transformation matrix of the camera. Given the values of
             // rotx, roty, rotup, dist, implement a simple control of the location of 
@@ -293,17 +295,38 @@ function main() {
             //           
             //    let x = vec4();          // defines a 4d structure
             //    let y = x.splice(0,3);   // returns first 3 components of x and provides a 3d structure
-
             // *** begin code, replace the code below
-
-            let eye = vec3(0, 0, 0);
-            let up = vec3(0, 1, 0);
-            let at = vec3(0, 0, 0);
-
-            // --- compute and return the view-matrix                        
-            return mat4(1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,   0, 0, 0, 1);
             
+            let eye = vec3(1, 1, 1); //          ( x, y, z )     -> origin
+            let at = vec3(0, 0, 0);  //          ( x, y, z )     -> down -Z axis
+            let up = vec3(0, 1, 0);  //         < dx, dy, dz >   -> up Y axis
+            
+            let m1 = rotateX(rotx);
+            let m2 = rotateY(roty);
+            let m3 = rotateZ(rotup);
+
+            let rot_matrix = mult(mult(m1, m2), m3);
+
+
+            let cam_matrix = lookAt(eye, at, up);
+
+            let trans_matrix = translate(0, 0, dist / 10);
+            let view_matrix = mult(trans_matrix, cam_matrix);
+            view_matrix = mult(view_matrix, rot_matrix);
+ 
+            return view_matrix;
+
             // *** end code
+            
+            
+            //   model space -> model matrix -> world space
+            //      |--> to move around the scene, the vertices need to convert to world space
+            
+            //   world space -> view matrix -> view space
+            //      |--> points need to be moved again out of the world space and put into view space
+
+            //   view space -> projection matrix -> clip space
+            //      |--> projection (perspective matrix) is added -> GPU pipeline clips range vertices -> send model to fragment shader for rasterization 
 
         },
 
@@ -314,15 +337,23 @@ function main() {
             let far = document.getElementById("farSlider").value;
             let dist = Number(document.getElementById("distSlider").value);
             let d = Math.sin(radians(fovy));
-
+            // console.log(dist);
             switch (document.getElementById("projectionSelect").value) {
                 case "persp":
 
                     // *** TODO_A3 *** Task 1b ***
                     // Using the values above, implement the perspective projection matrix
                     // and replace the standard projection matrix below. 
-
-                    return mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
+                   
+                    // perspective(fovy, aspect, near, far)
+                    
+                    let proj_matrix;
+                    let aspect = 1;
+                    let nearValue = near;
+                    let farValue = far;                    
+                    proj_matrix = perspective(fovy, aspect, nearValue, farValue);
+                    
+                    return proj_matrix;
 
                 case "ortho":
 
@@ -331,6 +362,35 @@ function main() {
                     // and replace the standard projection matrix below. 
                     // Derive the values for left, right, top, bottom from dist and fovy. 
                     // Why can't you use the near-value from above? Replace near with appropriate value.                     
+
+                    // translate: function(m, tx, ty, tz) {
+                    //     return mult(m, translate(tx, ty, tz));
+                    //   }
+                    
+                    // rotateX: function(m, angleInRadians) {
+                    //     return mult(m, rotateX(angleInRadians));
+                    // }
+                    
+                    // rotateY: function(m, angleInRadians) {
+                    //     return mult(m, rotateY(angleInRadians));
+                    // }
+                    
+                    // rotateZ: function(m, angleInRadians) {
+                    //     return mult(m, rotateZ(angleInRadians));
+                    // }
+                    
+                    // scalem: function(m, sx, sy, sz) {
+                    //     return mult(m, scalem(sx, sy, sz));
+                    // }
+
+                    // let ortho_matrix;
+                    // let aspect = 1;         // aspect
+                    // let left = -1.0;        // 
+                    // let right = 1.0;
+                    // let ytop = 1.0;
+                    // let bottom = -1.0;
+                    // ortho_matrix = ortho()
+
 
                     return mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
             }
@@ -507,7 +567,6 @@ function main() {
     // Nested render loop function. It performs the actual drawing of the scene and needs
     // to be called each time anything has changes and needs to be updated. 
     function render(now) {
-
         // --- update animation-timings ----
         timings.update(now);
 
