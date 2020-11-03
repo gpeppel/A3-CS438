@@ -266,9 +266,6 @@ function main() {
             gl.uniform1f(u_timeLoc, 0.1 * this.speed * now);
         }
     };
-    // var modelViewMatrix, projectionMatrix;
-    // var modelViewMatrixLoc, projectionMatrixLoc;
-
     // --- camera object to wrap camera parameters and methods    
     let camera = {
         viewMatrix: function () {
@@ -297,72 +294,82 @@ function main() {
             //    let y = x.splice(0,3);   // returns first 3 components of x and provides a 3d structure
             // *** begin code, replace the code below
             
-            let eye = vec3(1, 1, 1); //          ( x, y, z )     -> origin
-            let at = vec3(0, 0, 0);  //          ( x, y, z )     -> down -Z axis
-            let up = vec3(0, 1, 0);  //         < dx, dy, dz >   -> up Y axis
+
+            let eye = vec3(0, 0, 0);   //   ( x, y, z )    --> origin
+            let at  = vec3(0, 0, 0);   //   ( x, y, z )    --> down -Z axis
+            let up  = vec3(0, 1, 0);   //  < dx, dy, dz >  --> up Y axis
             
+            // create rotation matrices 
             let m1 = rotateX(rotx);
             let m2 = rotateY(roty);
             let m3 = rotateZ(rotup);
 
+            // multiply m1 & m2 and multiply the product with m3
             let rot_matrix = mult(mult(m1, m2), m3);
-
-
+            
+            // camera matrix
             let cam_matrix = lookAt(eye, at, up);
-
-            let trans_matrix = translate(0, 0, dist / 10);
+            
+            // translate
+            let trans_matrix = translate(0, 0, -dist);
+            
+            // multiply translation matrix with the camera
             let view_matrix = mult(trans_matrix, cam_matrix);
+            
+            // lastly multiply view matrix with the rotation matrix
             view_matrix = mult(view_matrix, rot_matrix);
- 
+            
             return view_matrix;
-
             // *** end code
-            
-            
-            //   model space -> model matrix -> world space
-            //      |--> to move around the scene, the vertices need to convert to world space
-            
-            //   world space -> view matrix -> view space
-            //      |--> points need to be moved again out of the world space and put into view space
-
-            //   view space -> projection matrix -> clip space
-            //      |--> projection (perspective matrix) is added -> GPU pipeline clips range vertices -> send model to fragment shader for rasterization 
-
         },
 
         projMatrix: function () {
-
-            let fovy = document.getElementById("fovySlider").value;
-            let near = document.getElementById("nearSlider").value;
-            let far = document.getElementById("farSlider").value;
-            let dist = Number(document.getElementById("distSlider").value);
+        
+            let fovy = document.getElementById("fovySlider").value;             // fovy --> 90
+            let near = document.getElementById("nearSlider").value;             // near--> 0.1
+            let far = document.getElementById("farSlider").value;               // far --> 10
+            let dist = Number(document.getElementById("distSlider").value);     // dist --> 2
             let d = Math.sin(radians(fovy));
-            // console.log(dist);
+
             switch (document.getElementById("projectionSelect").value) {
                 case "persp":
 
                     // *** TODO_A3 *** Task 1b ***
                     // Using the values above, implement the perspective projection matrix
                     // and replace the standard projection matrix below. 
-                   
-                    // perspective(fovy, aspect, near, far)
-                    
-                    let proj_matrix;
+    
+                    let proj_matrix; // perspective(fovy, aspect, near, far)
                     let aspect = 1;
                     let nearValue = near;
-                    let farValue = far;                    
+                    let farValue = far;
                     proj_matrix = perspective(fovy, aspect, nearValue, farValue);
-                    
                     return proj_matrix;
 
                 case "ortho":
+                    // let ortho_matrix;
+                    // let newNear = -near / 2;               // far --> 10
+                    // let far = 1;
+                    // let left = -90 - near * Math.cot(radians(-90));
+                    // let right = 90 - near * Math.cos(radians(90));
+                    // let bottom = -1.0;
+                    // let ytop = 1.0;
 
                     // *** TODO_A3 *** Task 1c ***
                     // Using the values above, implement the orthographic projection matrix
                     // and replace the standard projection matrix below. 
                     // Derive the values for left, right, top, bottom from dist and fovy. 
                     // Why can't you use the near-value from above? Replace near with appropriate value.                     
-
+                    
+                    //         function ortho(left, right, bottom, top, near, far) 
+                    //          fovy --> 90  near--> 0.1  far --> 10   dist --> 2
+                    //                      x  = right    x  = left      
+                    //                      y  = top      y  = bottom
+                    //                      z  = -near    z  = -far
+            
+                    return mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
+            }
+        }
+    };
                     // translate: function(m, tx, ty, tz) {
                     //     return mult(m, translate(tx, ty, tz));
                     //   }
@@ -382,21 +389,6 @@ function main() {
                     // scalem: function(m, sx, sy, sz) {
                     //     return mult(m, scalem(sx, sy, sz));
                     // }
-
-                    // let ortho_matrix;
-                    // let aspect = 1;         // aspect
-                    // let left = -1.0;        // 
-                    // let right = 1.0;
-                    // let ytop = 1.0;
-                    // let bottom = -1.0;
-                    // ortho_matrix = ortho()
-
-
-                    return mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
-            }
-        }
-    };
-
     // --- object literal to wrap the light parameters and methods
     let light = {
         // light transform matrix        
