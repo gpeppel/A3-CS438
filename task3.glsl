@@ -23,6 +23,7 @@ uniform vec3 u_lightcol;
 // ----------------------------------------------------------------------------
 vec3 phongLighting(vec3 V, vec3 N, vec3 L, float r)
 {
+    
     // *** TODO_A3 *** Task 2b
     // Implement the Phong reflection model (Phong lighting)
     // compute the diffuse, specular, and ambient terms
@@ -33,11 +34,17 @@ vec3 phongLighting(vec3 V, vec3 N, vec3 L, float r)
     // - r: distance of the light source
 
     // *** begin code, replace the values below    
-
+    
     // diffuse component
-    vec3 diffuse = u_kd*u_lightcol;
-    // specular component           
-    vec3 specular = u_ks*u_lightcol;
+    float dd = max(dot(N, L),0.0);
+    vec3 diffuse = u_kd*u_lightcol*dd;
+    diffuse = diffuse/pow(r,2.0);
+
+    // specular component
+    vec3 reflection = reflect(N, L);
+    vec3 specular = u_ks*u_lightcol*pow(max(dot(V, reflection),0.0),u_qs);
+    specular = specular/pow(r, 2.0);
+    
     // ambient component
     vec3 ambient = u_ka*u_lightcol;
 
