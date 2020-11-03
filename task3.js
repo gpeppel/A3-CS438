@@ -5,9 +5,9 @@ const TASKS = true;
 function studentdata() {
 
     //*** TODO_A3 : insert your data below ***
-    const lastname = 'Lastname';
-    const firstname = 'Firstname';
-    const studentnum = '010110';
+    const lastname = 'Peppel';
+    const firstname = 'Greg';
+    const studentnum = '31419943';
     document.getElementById("author").innerText = ("Author: ").concat(lastname, ", ", firstname, ", ", studentnum);
     document.getElementById("title").innerText = ("A3: ").concat(lastname, ", ", firstname, ", ", studentnum);
 }
